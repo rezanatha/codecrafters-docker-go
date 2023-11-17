@@ -71,16 +71,16 @@ func main() {
 	///==== copy binary (what to copy?)
 	copyCommand, err := exec.LookPath(command)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	if err := copyFile(chrootCommand, copyCommand); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	//chroot
 	if err := syscall.Chroot(tempDir); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	//run command
