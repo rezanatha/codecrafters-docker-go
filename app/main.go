@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -49,7 +48,7 @@ func main() {
 
 	tempDir, err := os.MkdirTemp("", "chroot_temp")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	defer os.RemoveAll(tempDir)
@@ -66,7 +65,7 @@ func main() {
 	// fmt.Println("mydir", mydir)
 
 	chrootCommand := filepath.Join(tempDir, command)
-	fmt.Println("chroot dir", chrootCommand)
+	//fmt.Println("chroot dir", chrootCommand)
 
 	///==== copy binary (what to copy?)
 	copyCommand, err := exec.LookPath(command)
