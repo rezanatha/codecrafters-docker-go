@@ -88,12 +88,9 @@ func main() {
 
 	cmd := exec.Command(command, args...)
 	err = cmd.Run()
-
-	stdout, _ := cmd.StdoutPipe()
-	stderr, _ := cmd.StderrPipe()
-
-	go io.Copy(os.Stdout, stdout)
-	go io.Copy(os.Stderr, stderr)
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Run() err: %v \n", err)
