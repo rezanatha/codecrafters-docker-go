@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,8 +11,13 @@ import (
 )
 
 // Usage: your_docker.sh run <image> <command> <arg1> <arg2> ...
-
 func copyFile(destination string, source string) error {
+	/*
+		Use defer and Close() whenever we are working on files
+		(i.e., using APIs such as os.Open or os.Create) as it kills the process associated with it.
+		Otherwise we would encounter "text file busy" error.
+	*/
+
 	sourceFile, err := os.Open(source)
 	if err != nil {
 		return err
@@ -28,6 +34,7 @@ func copyFile(destination string, source string) error {
 	if err != nil {
 		return err
 	}
+	defer destinationFile.Close()
 
 	_, err = io.Copy(destinationFile, sourceFile)
 	if err != nil {
@@ -47,7 +54,7 @@ func main() {
 	//==== mkdir
 	tempDir, err := os.MkdirTemp("", "chroot_temp")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	defer os.RemoveAll(tempDir)
@@ -57,16 +64,16 @@ func main() {
 	///==== copy binary (what to copy?)
 	command, err = exec.LookPath(command)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if err := copyFile(chrootCommand, command); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	///==== chroot
 	if err := syscall.Chroot(tempDir); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	///==== create dev/null
@@ -78,15 +85,19 @@ func main() {
 	chrootCommand = filepath.Join("/", filepath.Base(command))
 
 	cmd := exec.Command(chrootCommand, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	stdout, _ := cmd.StdoutPipe()
+	stderr, _ := cmd.StderrPipe()
 
-	if err := cmd.Run(); err != nil {
+	go io.Copy(os.Stdout, stdout)
+	go io.Copy(os.Stderr, stderr)
+	err = cmd.Run()
+	if err != nil {
 		fmt.Printf("Run() err: %v \n", err)
-		os.Exit(cmd.ProcessState.ExitCode())
+		exitError, _ := err.(*exec.ExitError)
+		os.Exit(exitError.ExitCode())
 	}
 
+	os.Exit(0)
 	/* STEPS
 	We want to execute a binary after doing chroot, so that the binary will think the root is the directory we create, instead of the real root directory
 	1. mkdir temporary folder as our root. call this "jail"
