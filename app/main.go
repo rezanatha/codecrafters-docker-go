@@ -45,7 +45,6 @@ func main() {
 	args := os.Args[4:len(os.Args)]
 
 	//==== mkdir
-
 	tempDir, err := os.MkdirTemp("", "chroot_temp")
 	if err != nil {
 		panic(err)
@@ -53,27 +52,15 @@ func main() {
 
 	defer os.RemoveAll(tempDir)
 
-	// //cd to mkdir
-	// if err := os.Chdir(tempDir); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// mydir, func_err := os.Getwd()
-	// if func_err != nil {
-	// 	fmt.Println(func_err)
-	// }
-	// fmt.Println("mydir", mydir)
-
 	chrootCommand := filepath.Join(tempDir, filepath.Base(command))
-	//fmt.Println("chroot dir", chrootCommand)
 
 	///==== copy binary (what to copy?)
-	copyCommand, err := exec.LookPath(command)
+	command, err = exec.LookPath(command)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := copyFile(chrootCommand, copyCommand); err != nil {
+	if err := copyFile(chrootCommand, command); err != nil {
 		panic(err)
 	}
 
@@ -82,12 +69,12 @@ func main() {
 		panic(err)
 	}
 
-	// //create dev/null
-	// os.Mkdir("/dev", 0755)
-	// devNull, _ := os.Create("/dev/null")
-	// devNull.Close()
+	///==== create dev/null
+	os.Mkdir("/dev", 0755)
+	devNull, _ := os.Create("/dev/null")
+	devNull.Close()
 
-	//run command
+	///==== run command
 	chrootCommand = filepath.Join("/", filepath.Base(command))
 
 	cmd := exec.Command(chrootCommand, args...)
@@ -100,7 +87,6 @@ func main() {
 		os.Exit(cmd.ProcessState.ExitCode())
 	}
 
-	os.Exit(0)
 	/* STEPS
 	We want to execute a binary after doing chroot, so that the binary will think the root is the directory we create, instead of the real root directory
 	1. mkdir temporary folder as our root. call this "jail"
