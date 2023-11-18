@@ -11,7 +11,7 @@ import (
 
 // Usage: your_docker.sh run <image> <command> <arg1> <arg2> ...
 
-func copyFile(destination, source string) error {
+func copyFile(destination string, source string) error {
 	sourceFile, err := os.Open(source)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func main() {
 	// }
 	// fmt.Println("mydir", mydir)
 
-	chrootCommand := filepath.Join(tempDir, command)
+	chrootCommand := filepath.Join(tempDir, filepath.Base(command))
 	//fmt.Println("chroot dir", chrootCommand)
 
 	///==== copy binary (what to copy?)
@@ -77,16 +77,20 @@ func main() {
 		panic(err)
 	}
 
-	//chroot
+	///==== chroot
 	if err := syscall.Chroot(tempDir); err != nil {
 		panic(err)
 	}
 
+	//create dev/null
+	os.Mkdir("/dev", 0755)
+	devNull, _ := os.Create("/dev/null")
+	devNull.Close()
+
 	//run command
 	chrootCommand = filepath.Join("/", filepath.Base(command))
 
-	cmd := exec.Command(command, args...)
-	err = cmd.Run()
+	cmd := exec.Command(chrootCommand, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
