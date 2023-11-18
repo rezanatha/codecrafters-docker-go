@@ -82,10 +82,10 @@ func main() {
 		panic(err)
 	}
 
-	//create dev/null
-	os.Mkdir("/dev", 0755)
-	devNull, _ := os.Create("/dev/null")
-	devNull.Close()
+	// //create dev/null
+	// os.Mkdir("/dev", 0755)
+	// devNull, _ := os.Create("/dev/null")
+	// devNull.Close()
 
 	//run command
 	chrootCommand = filepath.Join("/", filepath.Base(command))
