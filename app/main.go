@@ -95,7 +95,7 @@ func main() {
 	go io.Copy(os.Stderr, stderr)
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWPID
+		Cloneflags: syscall.CLONE_NEWPID | syscall.CLONE_NEWUTS,
 	}
 
 	if err = cmd.Run(); err != nil {
