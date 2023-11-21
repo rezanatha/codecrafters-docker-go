@@ -1,3 +1,6 @@
+//go:build linux
+// +build linux
+
 package main
 
 import (
@@ -90,13 +93,12 @@ func main() {
 
 	go io.Copy(os.Stdout, stdout)
 	go io.Copy(os.Stderr, stderr)
-	err = cmd.Run()
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWPID
-	}
+	// cmd.SysProcAttr = &syscall.SysProcAttr{
+	// 	Cloneflags: syscall.CLONE_NEWPID
+	// }
 
-	if err != nil {
+	if err = cmd.Run(); err != nil {
 		fmt.Printf("Run() err: %v \n", err)
 		exitError, _ := err.(*exec.ExitError)
 		os.Exit(exitError.ExitCode())
