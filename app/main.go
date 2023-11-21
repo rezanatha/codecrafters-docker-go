@@ -91,6 +91,11 @@ func main() {
 	go io.Copy(os.Stdout, stdout)
 	go io.Copy(os.Stderr, stderr)
 	err = cmd.Run()
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags: syscall.CLONE_NEWPID
+	}
+
 	if err != nil {
 		fmt.Printf("Run() err: %v \n", err)
 		exitError, _ := err.(*exec.ExitError)
@@ -98,12 +103,10 @@ func main() {
 	}
 
 	os.Exit(0)
-	/* STEPS
-	We want to execute a binary after doing chroot, so that the binary will think the root is the directory we create, instead of the real root directory
-	1. mkdir temporary folder as our root. call this "jail"
-	2. copy binary from anywhere to jail
-	3. chroot to jail
-	4. execute binary
-
+	/* ISOLATE PROCESS: STEPS
+	We want to make sure our executed process can't access other processes outside our defined environment. This can be done by creating PID namespaces to ensure our program has its own isolated process tree
+	1. Create a new PID Namespace for our command by cloning current process tree and do unshare (detach it from all old processes)
+	2. Create additional fork/exec
+	3. Handle slightly different process behaviour due to it's being the first on the process tree
 	*/
 }
